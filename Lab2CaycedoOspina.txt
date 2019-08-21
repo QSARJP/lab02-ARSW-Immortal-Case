@@ -1,0 +1,6 @@
+Integrantes:
+David Caycedo
+Juan Ospina
+
+Immortal-Case
+https://github.com/QSARJP/lab02-ARSW-Immortal-Case.git
