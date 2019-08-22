@@ -2,6 +2,10 @@ package edu.eci.arsw.highlandersim;
 
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import javax.swing.text.StyledEditorKit.BoldAction;
 
 public class Immortal extends Thread {
 
@@ -17,6 +21,8 @@ public class Immortal extends Thread {
 
     private final Random r = new Random(System.currentTimeMillis());
 
+    private volatile Boolean flag = true;
+
 
     public Immortal(String name, List<Immortal> immortalsPopulation, int health, int defaultDamageValue, ImmortalUpdateReportCallback ucb) {
         super(name);
@@ -29,7 +35,8 @@ public class Immortal extends Thread {
 
     public void run() {
 
-        while (true) {
+        while (flag) {
+            System.out.println("corriendo");
             Immortal im;
 
             int myIndex = immortalsPopulation.indexOf(this);
@@ -55,20 +62,46 @@ public class Immortal extends Thread {
 
     }
 
-    public void fight(Immortal i2) {
-
-        if (i2.getHealth() > 0) {
-            i2.changeHealth(i2.getHealth() - defaultDamageValue);
-            this.health += defaultDamageValue;
-            updateCallback.processReport("Fight: " + this + " vs " + i2+"\n");
-        } else {
-            updateCallback.processReport(this + " says:" + i2 + " is already dead!\n");
-        }
-
+    public void stopRunning()
+    {
+        flag = false;
     }
+     
+    public void resumeRunning()
+    {
+        flag = true;
+    }
+     
+
+    public void fight(Immortal i2) {
+        ReadWriteLock lock = new ReentrantReadWriteLock();
+       
+        lock.readLock().lock();
+        try{
+            if (i2.getHealth() > 0) {
+
+                i2.changeHealth(i2.getHealth() - defaultDamageValue);
+                this.health += defaultDamageValue;
+                updateCallback.processReport("Fight: " + this + " vs " + i2+"\n");
+            } else {
+                updateCallback.processReport(this + " says:" + i2 + " is already dead!\n");
+            }
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+        
+    
 
     public void changeHealth(int v) {
-        health = v;
+        ReadWriteLock lock = new ReentrantReadWriteLock();
+        lock.readLock().lock();
+        try{
+            health = v;
+        }finally {
+            lock.writeLock().unlock();
+        }
+
     }
 
     public int getHealth() {
