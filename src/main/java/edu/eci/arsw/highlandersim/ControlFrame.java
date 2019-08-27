@@ -1,6 +1,7 @@
 package edu.eci.arsw.highlandersim;
 
 import java.awt.BorderLayout;
+
 import java.awt.EventQueue;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,7 +22,7 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import java.awt.Color;
 import javax.swing.JScrollBar;
-
+import java.util.concurrent.CopyOnWriteArrayList;
 public class ControlFrame extends JFrame {
 
     private static final int DEFAULT_IMMORTAL_HEALTH = 100;
@@ -29,7 +30,7 @@ public class ControlFrame extends JFrame {
 
     private JPanel contentPane;
 
-    private List<Immortal> immortals;
+    private CopyOnWriteArrayList<Immortal> immortals;
 
     private JTextArea output;
     private JLabel statisticsLabel;
@@ -37,6 +38,8 @@ public class ControlFrame extends JFrame {
     private JTextField numOfImmortals;
 
     public static volatile Boolean stop = false;
+    
+    private static boolean Pausa=false;
 
     /**
      * Launch the application.
@@ -72,7 +75,7 @@ public class ControlFrame extends JFrame {
         btnStart.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
-                immortals = setupInmortals();
+                immortals = (CopyOnWriteArrayList<Immortal>) setupInmortals();
 
                 if (immortals != null) {
                     for (Immortal im : immortals) {
@@ -90,11 +93,11 @@ public class ControlFrame extends JFrame {
         btnPauseAndCheck.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
-                
+                Pausa=true;
                 int sum = 0;
                 for (Immortal im : immortals) {
                     sum += im.getHealth();
-                    im.pauseRunning();
+                    
                 }
 
                 statisticsLabel.setText("<html>"+immortals.toString()+"<br>Health sum:"+ sum);
@@ -109,6 +112,7 @@ public class ControlFrame extends JFrame {
 
         btnResume.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+            	Pausa=false;
                 for (Immortal im : immortals) {
                     
                     im.resumeRunning();
@@ -134,8 +138,10 @@ public class ControlFrame extends JFrame {
         btnStop.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                     stop = true;
+                
                     btnPauseAndCheck.setEnabled(false);
                     btnResume.setEnabled(false);
+                    
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException ex) {
@@ -157,14 +163,14 @@ public class ControlFrame extends JFrame {
 
     }
 
-    public List<Immortal> setupInmortals() {
+    public CopyOnWriteArrayList<Immortal> setupInmortals() {
 
         ImmortalUpdateReportCallback ucb=new TextAreaUpdateReportCallback(output,scrollPane);
         
         try {
             int ni = Integer.parseInt(numOfImmortals.getText());
 
-            List<Immortal> il = new LinkedList<Immortal>();
+            CopyOnWriteArrayList<Immortal> il = new CopyOnWriteArrayList<Immortal>();
 
             for (int i = 0; i < ni; i++) {
                 Immortal i1 = new Immortal("im" + i, il, DEFAULT_IMMORTAL_HEALTH, DEFAULT_DAMAGE_VALUE,ucb);
@@ -177,6 +183,14 @@ public class ControlFrame extends JFrame {
         }
 
     }
+
+	public static boolean isPausa() {
+		return Pausa;
+	}
+
+	public static void setPausa(boolean pausa) {
+		Pausa = pausa;
+	}
 
 }
 

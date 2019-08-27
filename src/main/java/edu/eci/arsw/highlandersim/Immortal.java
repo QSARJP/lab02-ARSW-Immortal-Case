@@ -2,6 +2,7 @@ package edu.eci.arsw.highlandersim;
 
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -15,7 +16,7 @@ public class Immortal extends Thread {
     
     private int defaultDamageValue;
 
-    private final List<Immortal> immortalsPopulation;
+    private final CopyOnWriteArrayList<Immortal> immortalsPopulation;
 
     private final String name;
 
@@ -31,56 +32,62 @@ public class Immortal extends Thread {
         super(name);
         this.updateCallback=ucb;
         this.name = name;
-        this.immortalsPopulation = immortalsPopulation;
+        this.immortalsPopulation = (CopyOnWriteArrayList<Immortal>) immortalsPopulation;
         this.health = health;
         this.defaultDamageValue=defaultDamageValue;
     }
 
     public void run() {
         while (vivo && !ControlFrame.stop ){
-            if (flag) {
-                //System.out.println("corriendo");
-                Immortal im;
-    
-                int myIndex = immortalsPopulation.indexOf(this);
-    
-                int nextFighterIndex = r.nextInt(immortalsPopulation.size());
-    
-                //avoid self-fight
-                if (nextFighterIndex == myIndex) {
-                    nextFighterIndex = ((nextFighterIndex + 1) % immortalsPopulation.size());
-                }
-    
-                im = immortalsPopulation.get(nextFighterIndex);
-    
-                this.fight(im);
-    
-                try {
-                    Thread.sleep(1);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-    
+        	synchronized(this) {
+        		if (ControlFrame.isPausa()) {                          
+    	             try {
+	                    wait();
+	                } catch (InterruptedException e) {
+	                    e.printStackTrace();
+	                }
+	    
+               }
+        	}
+        	Immortal im;
+            
+            int myIndex = immortalsPopulation.indexOf(this);
+
+            int nextFighterIndex = r.nextInt(immortalsPopulation.size());
+
+            //avoid self-fight
+            if (nextFighterIndex == myIndex) {
+                nextFighterIndex = ((nextFighterIndex + 1) % immortalsPopulation.size());
             }
-    
+
+            im = immortalsPopulation.get(nextFighterIndex);
+
+            this.fight(im);
+            
+            
         }
+            
+          
+    
+        
         
     }
 
-    public void pauseRunning()
-    {
-        flag = false;
-    }
-     
-    public void resumeRunning()
-    {
-        flag = true;
+
+    public synchronized void resumeRunning() {
+    
+    	this.notify();
+        
     }
      
 
     public void fight(Immortal i2) {
-        synchronized(this){
-            synchronized(i2){
+    	
+    	Immortal im1 = getId()>i2.getId()?this:i2;
+        Immortal im2 = getId()>i2.getId()?i2:this;
+        
+        synchronized(im1){
+            synchronized(im2){
                 if (i2.getHealth() > 0) {
 
                     i2.changeHealth(i2.getHealth() - defaultDamageValue);
@@ -100,10 +107,10 @@ public class Immortal extends Thread {
 
     public void changeHealth(int v) {
         health = v;
-        if (health <=  0){
+        /*if (health <=  0){
             vivo = false;
             immortalsPopulation.remove(this);
-        }
+        }*/
 
     }
 
