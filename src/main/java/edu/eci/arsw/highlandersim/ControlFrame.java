@@ -36,6 +36,8 @@ public class ControlFrame extends JFrame {
     private JScrollPane scrollPane;
     private JTextField numOfImmortals;
 
+    public static volatile Boolean stop = false;
+
     /**
      * Launch the application.
      */
@@ -92,7 +94,7 @@ public class ControlFrame extends JFrame {
                 int sum = 0;
                 for (Immortal im : immortals) {
                     sum += im.getHealth();
-                    im.suspend();
+                    im.pauseRunning();
                 }
 
                 statisticsLabel.setText("<html>"+immortals.toString()+"<br>Health sum:"+ sum);
@@ -109,7 +111,7 @@ public class ControlFrame extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 for (Immortal im : immortals) {
                     
-                    im.resume();
+                    im.resumeRunning();
                     
                 }
                 
@@ -129,6 +131,18 @@ public class ControlFrame extends JFrame {
         JButton btnStop = new JButton("STOP");
         btnStop.setForeground(Color.RED);
         toolBar.add(btnStop);
+        btnStop.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                    stop = true;
+                    btnPauseAndCheck.setEnabled(false);
+                    btnResume.setEnabled(false);
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ex) {
+                    System.err.println("Error stopping");
+                }
+            }
+        });
 
         scrollPane = new JScrollPane();
         contentPane.add(scrollPane, BorderLayout.CENTER);
