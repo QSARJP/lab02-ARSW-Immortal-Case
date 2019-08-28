@@ -3,10 +3,7 @@ package edu.eci.arsw.highlandersim;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import javax.swing.text.StyledEditorKit.BoldAction;
 
 public class Immortal extends Thread {
 
@@ -22,7 +19,7 @@ public class Immortal extends Thread {
 
     private final Random r = new Random(System.currentTimeMillis());
 
-    private volatile Boolean flag = true;
+    //private volatile Boolean flag = true;
     
 
     private volatile Boolean vivo = true;
@@ -88,7 +85,7 @@ public class Immortal extends Thread {
         
         synchronized(im1){
             synchronized(im2){
-                if (i2.getHealth() > 0) {
+                if (i2.getHealth() > 0 && vivo) {
 
                     i2.changeHealth(i2.getHealth() - defaultDamageValue);
                     this.health += defaultDamageValue;
@@ -107,10 +104,10 @@ public class Immortal extends Thread {
 
     public void changeHealth(int v) {
         health = v;
-        /*if (health <=  0){
+        if (v <=  0){
             vivo = false;
             immortalsPopulation.remove(this);
-        }*/
+        }
 
     }
 
